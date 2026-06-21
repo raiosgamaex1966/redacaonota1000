@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-type AIProvider = 'openrouter' | 'openai' | 'deepinfra';
+type AIProvider = 'openrouter' | 'openai' | 'gemini' | 'claude' | 'groq' | 'deepinfra';
 
 interface ClaudeEvaluationResult {
   competence_1: {
@@ -42,38 +42,61 @@ export function useEssayEvaluation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openrouter');
+  const [useSiteAI, setUseSiteAI] = useState(true);
 
-  const getAPIConfig = (provider: AIProvider) => {
+  const getProviderConfig = (provider: AIProvider, userApiKey?: string) => {
+    const apiKey = useSiteAI 
+      ? import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_CLAUDE_API_KEY || import.meta.env.VITE_DEEPINFRA_API_KEY || ''
+      : userApiKey || '';
+
     switch (provider) {
       case 'openrouter':
         return {
           url: 'https://openrouter.ai/api/v1/chat/completions',
-          apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || '',
-          model: 'anthropic/claude-sonnet-4-6',
+          apiKey: useSiteAI ? (import.meta.env.VITE_OPENROUTER_API_KEY || apiKey) : apiKey,
+          model: 'meta-llama/llama-3.2-1b-instruct:free' // Cheapest model
         };
       case 'openai':
         return {
           url: 'https://api.openai.com/v1/chat/completions',
-          apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-          model: 'gpt-4o',
+          apiKey,
+          model: 'gpt-3.5-turbo' // Cheapest GPT model
+        };
+      case 'gemini':
+        return {
+          url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+          apiKey,
+          model: 'gemini-2.0-flash' // Cheapest Gemini model
+        };
+      case 'claude':
+        return {
+          url: 'https://api.anthropic.com/v1/messages',
+          apiKey,
+          model: 'claude-3-haiku-20240307' // Cheapest Claude model
+        };
+      case 'groq':
+        return {
+          url: 'https://api.groq.com/openai/v1/chat/completions',
+          apiKey,
+          model: 'llama-3.3-70b-versatile' // Cheapest Groq model
         };
       case 'deepinfra':
         return {
           url: 'https://api.deepinfra.com/v1/openai/chat/completions',
-          apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY || '',
-          model: 'meta-llama/Llama-3-8B-Instruct',
+          apiKey: useSiteAI ? (import.meta.env.VITE_DEEPINFRA_API_KEY || apiKey) : apiKey,
+          model: 'meta-llama/Llama-3.2-1B-Instruct' // Cheapest DeepInfra model
         };
     }
   };
 
-  const evaluateEssay = async (essayContent: string): Promise<ClaudeEvaluationResult | null> => {
+  const evaluateEssay = async (essayContent: string, userApiKey?: string): Promise<ClaudeEvaluationResult | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const config = getAPIConfig(selectedProvider);
+      const config = getProviderConfig(selectedProvider, userApiKey);
 
-      // System prompt para avaliação
+      // System prompt for evaluation
       const systemPrompt = `Você é um avaliador especializado em redações do ENEM 2026. 
 Sua tarefa é avaliar uma redação contra as 5 competências oficiais.
 
@@ -125,54 +148,73 @@ INSTRUÇÕES DE AVALIAÇÃO:
 
 Retorne APENAS um JSON válido, sem markdown, sem explicações extras.`;
 
-      const response = await fetch(config.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
-          ...(selectedProvider === 'openrouter' && {
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'RCS Redação Nota Mil',
-          }),
-        },
-        body: JSON.stringify({
-          model: config.model,
-          max_tokens: 2000,
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            {
-              role: 'user',
-              content: `REDAÇÃO:\n---\n${essayContent}\n---`,
-            },
-          ],
-        }),
-      });
+      let response;
+      if (selectedProvider === 'gemini') {
+        // Gemini uses different API format
+        response = await fetch(`${config.url}?key=${config.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemPrompt}\n\nREDAÇÃO:\n---\n${essayContent}\n---` }] }],
+            generationConfig: {
+              responseMimeType: 'application/json'
+            }
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`Erro ao avaliar redação: ${response.statusText}`);
-      }
+        const data = await response.json();
+        const textContent = data.candidates[0].content.parts[0].text;
+        return JSON.parse(textContent);
+      } else if (selectedProvider === 'claude') {
+        // Claude uses different format
+        response = await fetch(config.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': config.apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: config.model,
+            max_tokens: 2000,
+            messages: [
+              { role: 'user', content: `${systemPrompt}\n\nREDAÇÃO:\n---\n${essayContent}\n---` }
+            ]
+          })
+        });
 
-      const data = await response.json();
-      let textContent: string;
-
-      if (selectedProvider === 'openrouter' || selectedProvider === 'openai' || selectedProvider === 'deepinfra') {
-        textContent = data.choices[0].message.content;
+        const data = await response.json();
+        const textContent = data.content[0].text;
+        return JSON.parse(textContent);
       } else {
-        textContent = data.content[0]?.text;
+        // OpenAI-compatible format (OpenRouter, Groq, DeepInfra, OpenAI)
+        response = await fetch(config.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`,
+            ...(selectedProvider === 'openrouter' && {
+              'HTTP-Referer': window.location.origin,
+              'X-Title': 'RCS Redação Nota Mil'
+            })
+          },
+          body: JSON.stringify({
+            model: config.model,
+            max_tokens: 2000,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `REDAÇÃO:\n---\n${essayContent}\n---` }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        const textContent = data.choices[0].message.content;
+        return JSON.parse(textContent);
       }
-
-      if (!textContent) {
-        throw new Error('Resposta inválida da API');
-      }
-
-      const evaluation = JSON.parse(textContent) as ClaudeEvaluationResult;
-      return evaluation;
-
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      console.error('Erro na avaliação:', err);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido ao avaliar a redação';
       setError(message);
       return null;
     } finally {
@@ -186,5 +228,7 @@ Retorne APENAS um JSON válido, sem markdown, sem explicações extras.`;
     error,
     selectedProvider,
     setSelectedProvider,
+    useSiteAI,
+    setUseSiteAI
   };
 }

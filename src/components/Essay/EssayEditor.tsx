@@ -9,6 +9,15 @@ interface EssayEditorProps {
   onEvaluationComplete?: (evaluationId: string) => void;
 }
 
+const providerLabels: Record<string, { label: string; model: string }> = {
+  openrouter: { label: 'OpenRouter', model: 'Llama 3.2 1B (Gratuito)' },
+  openai: { label: 'OpenAI', model: 'GPT-3.5 Turbo' },
+  gemini: { label: 'Gemini', model: 'Gemini 2.0 Flash' },
+  claude: { label: 'Claude', model: 'Claude 3 Haiku' },
+  groq: { label: 'Groq', model: 'Llama 3.3 70B' },
+  deepinfra: { label: 'DeepInfra', model: 'Llama 3.2 1B' }
+};
+
 export default function EssayEditor({ competencyId, theme, onEvaluationComplete }: EssayEditorProps) {
   const { user } = useAuth();
   const {
@@ -17,23 +26,30 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
     error: evalError,
     selectedProvider,
     setSelectedProvider,
+    useSiteAI,
+    setUseSiteAI
   } = useEssayEvaluation();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userApiKey, setUserApiKey] = useState('');
 
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
   const handleSubmit = async () => {
     if (!user || !content.trim()) return;
+    if (!useSiteAI && !userApiKey.trim()) {
+      setError('Por favor, insira sua chave API');
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
 
     try {
-      // 1. Salvar redação
+      // 1. Save essay
       const { data: essay, error: essayError } = await supabase
         .from('essays')
         .insert({
@@ -48,12 +64,12 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
 
       if (essayError) throw essayError;
 
-      // 2. Avaliar com a IA selecionada
-      const evaluation = await evaluateEssay(content);
+      // 2. Evaluate with the selected AI
+      const evaluation = await evaluateEssay(content, useSiteAI ? undefined : userApiKey);
 
       if (!evaluation) throw new Error('Erro ao avaliar redação');
 
-      // 3. Salvar avaliação
+      // 3. Save evaluation
       const { data: evalData, error: evalError } = await supabase
         .from('essay_evaluations')
         .insert({
@@ -77,7 +93,7 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
 
       if (evalError) throw evalError;
 
-      // 4. Dar XP ao usuário
+      // 4. Give XP to user
       await supabase
         .from('user_xp')
         .insert({
@@ -108,20 +124,62 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
         Tema: <span className="font-semibold">{theme}</span>
       </p>
 
-      {/* Seletor de provedor de IA */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Provedor de IA para avaliação
-        </label>
-        <select
-          value={selectedProvider}
-          onChange={(e) => setSelectedProvider(e.target.value as any)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="openrouter">OpenRouter (Claude Sonnet)</option>
-          <option value="openai">OpenAI (GPT-4o)</option>
-          <option value="deepinfra">DeepInfra (Llama 3)</option>
-        </select>
+      {/* Opção de escolha da IA */}
+      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+        <h4 className="text-lg font-semibold text-gray-800 mb-3">Como você quer avaliar sua redação?</h4>
+        <div className="flex flex-wrap gap-4 mb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              checked={useSiteAI}
+              onChange={() => setUseSiteAI(true)}
+              className="w-4 h-4 text-primary"
+            />
+            <span className="font-medium text-gray-800">a) Usar IA do Site</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              checked={!useSiteAI}
+              onChange={() => setUseSiteAI(false)}
+              className="w-4 h-4 text-primary"
+            />
+            <span className="font-medium text-gray-800">b) Usar Sua IA</span>
+          </label>
+        </div>
+
+        {!useSiteAI && (
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Escolha o provedor de IA
+              </label>
+              <select
+                value={selectedProvider}
+                onChange={(e) => setSelectedProvider(e.target.value as any)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {Object.entries(providerLabels).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.label} - {val.model}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sua chave API ({providerLabels[selectedProvider].label})
+              </label>
+              <input
+                type="password"
+                value={userApiKey}
+                onChange={(e) => setUserApiKey(e.target.value)}
+                placeholder="Digite sua chave API aqui..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {(error || evalError) && (
