@@ -224,3 +224,28 @@ VALUES
   (4, 'Conhecimento de mecanismos linguísticos', 'Coesão', 'Uso de conectivos e coesão textual.', '🔗', 4),
   (5, 'Proposta de intervenção para o problema', 'Intervenção', 'Proposta de solução com os 5 elementos obrigatórios.', '💡', 5)
 ON CONFLICT (id) DO NOTHING;
+
+-- 7. Configurar keep-alive com pg_cron (evita que o banco seja pausado)
+-- Função que faz um ping no banco de dados
+CREATE OR REPLACE FUNCTION public.keep_alive() 
+RETURNS void AS $$
+BEGIN
+  -- Faz um select simples para manter o banco ativo
+  PERFORM 1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Cria um cron job que executa a função a cada 6 horas
+-- (verifique se o job já existe para evitar erros)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'keep-supabase-alive'
+  ) THEN
+    PERFORM cron.schedule(
+      'keep-supabase-alive',
+      '0 */6 * * *',
+      'SELECT public.keep_alive();'
+    );
+  END IF;
+END $$;
