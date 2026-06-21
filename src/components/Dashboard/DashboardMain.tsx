@@ -113,7 +113,7 @@ export default function DashboardMain() {
         <h3 className="text-xl font-bold mb-2">Enriqueça seu repertório</h3>
         <p className="mb-4">Explore exemplos de filmes, livros, conceitos e dados para usar em suas redações.</p>
         <button
-          onClick={() => alert('Página de Repertório em desenvolvimento! Volte em breve!')}
+          onClick={() => navigate('/repertoire')}
           className="bg-white text-accent font-semibold px-6 py-2 rounded-lg hover:bg-gray-100 transition"
         >
           Acessar Repertório

@@ -10,6 +10,7 @@ import CompetencyPage from './pages/CompetencyPage';
 import SubscriptionPlans from './pages/SubscriptionPlans';
 import AdminDashboard from './pages/AdminDashboard';
 import MyAccount from './pages/MyAccount';
+import Repertoire from './pages/Repertoire';
 
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -40,6 +41,7 @@ function App() {
           <Route path="/competency/:id" element={<CompetencyPage />} />
           <Route path="/plans" element={<SubscriptionPlans />} />
           <Route path="/my-account" element={<MyAccount />} />
+          <Route path="/repertoire" element={<Repertoire />} />
           <Route path="/admin" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminDashboard />
