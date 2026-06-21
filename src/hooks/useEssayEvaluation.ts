@@ -45,45 +45,41 @@ export function useEssayEvaluation() {
   const [useSiteAI, setUseSiteAI] = useState(true);
 
   const getProviderConfig = (provider: AIProvider, userApiKey?: string) => {
-    const apiKey = useSiteAI 
-      ? import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_CLAUDE_API_KEY || import.meta.env.VITE_DEEPINFRA_API_KEY || ''
-      : userApiKey || '';
-
     switch (provider) {
       case 'openrouter':
         return {
           url: 'https://openrouter.ai/api/v1/chat/completions',
-          apiKey: useSiteAI ? (import.meta.env.VITE_OPENROUTER_API_KEY || apiKey) : apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_OPENROUTER_API_KEY : userApiKey,
           model: 'meta-llama/llama-3.2-1b-instruct:free' // Cheapest model
         };
       case 'openai':
         return {
           url: 'https://api.openai.com/v1/chat/completions',
-          apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_OPENAI_API_KEY : userApiKey,
           model: 'gpt-3.5-turbo' // Cheapest GPT model
         };
       case 'gemini':
         return {
           url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-          apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_GEMINI_API_KEY : userApiKey,
           model: 'gemini-2.0-flash' // Cheapest Gemini model
         };
       case 'claude':
         return {
           url: 'https://api.anthropic.com/v1/messages',
-          apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_CLAUDE_API_KEY : userApiKey,
           model: 'claude-3-haiku-20240307' // Cheapest Claude model
         };
       case 'groq':
         return {
           url: 'https://api.groq.com/openai/v1/chat/completions',
-          apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_GROQ_API_KEY : userApiKey,
           model: 'llama-3.3-70b-versatile' // Cheapest Groq model
         };
       case 'deepinfra':
         return {
           url: 'https://api.deepinfra.com/v1/openai/chat/completions',
-          apiKey: useSiteAI ? (import.meta.env.VITE_DEEPINFRA_API_KEY || apiKey) : apiKey,
+          apiKey: useSiteAI ? import.meta.env.VITE_DEEPINFRA_API_KEY : userApiKey,
           model: 'meta-llama/Llama-3.2-1B-Instruct' // Cheapest DeepInfra model
         };
     }
