@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useEssayEvaluation } from '../../hooks/useEssayEvaluation';
 import { supabase } from '../../utils/supabaseClient';
@@ -35,8 +35,84 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userApiKey, setUserApiKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
+  const [loadingKey, setLoadingKey] = useState(false);
 
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+
+  // Load saved API key when component mounts or provider changes
+  useEffect(() => {
+    const loadSavedKey = async () => {
+      if (!user || useSiteAI) return;
+
+      setLoadingKey(true);
+      try {
+        const { data, error } = await supabase
+          .from('user_api_keys')
+          .select('api_key')
+          .eq('user_id', user.id)
+          .eq('provider', selectedProvider)
+          .single();
+
+        if (!error && data) {
+          setUserApiKey(data.api_key);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar chave API:', err);
+      } finally {
+        setLoadingKey(false);
+      }
+    };
+
+    loadSavedKey();
+  }, [user, selectedProvider, useSiteAI]);
+
+  const saveApiKey = async () => {
+    if (!user || !userApiKey.trim()) {
+      setError('Por favor, insira sua chave API');
+      return;
+    }
+
+    setSavingKey(true);
+    setError(null);
+
+    try {
+      // Check if the key already exists
+      const { data: existingKey } = await supabase
+        .from('user_api_keys')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('provider', selectedProvider)
+        .single();
+
+      if (existingKey) {
+        // Update existing key
+        await supabase
+          .from('user_api_keys')
+          .update({
+            api_key: userApiKey,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingKey.id);
+      } else {
+        // Insert new key
+        await supabase
+          .from('user_api_keys')
+          .insert({
+            user_id: user.id,
+            provider: selectedProvider,
+            api_key: userApiKey
+          });
+      }
+
+      alert('Chave API salva com sucesso!');
+    } catch (err) {
+      console.error('Erro ao salvar chave API:', err);
+      setError('Erro ao salvar chave API');
+    } finally {
+      setSavingKey(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!user || !content.trim()) return;
@@ -170,13 +246,23 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Sua chave API ({providerLabels[selectedProvider].label})
               </label>
-              <input
-                type="password"
-                value={userApiKey}
-                onChange={(e) => setUserApiKey(e.target.value)}
-                placeholder="Digite sua chave API aqui..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={userApiKey}
+                  onChange={(e) => setUserApiKey(e.target.value)}
+                  placeholder="Digite sua chave API aqui..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  onClick={saveApiKey}
+                  disabled={savingKey || loadingKey}
+                  className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition"
+                >
+                  {savingKey ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+              {loadingKey && <p className="text-sm text-gray-500 mt-1">Carregando chave salva...</p>}
             </div>
           </div>
         )}

@@ -16,8 +16,31 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Tabela para armazenar chaves API dos usuários
+CREATE TABLE IF NOT EXISTS user_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL, -- openrouter, openai, gemini, claude, groq, deepinfra
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, provider)
+);
+
+-- Políticas RLS para user_api_keys
+ALTER TABLE user_api_keys ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Usuários podem ver suas próprias chaves" ON user_api_keys
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem inserir suas próprias chaves" ON user_api_keys
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem atualizar suas próprias chaves" ON user_api_keys
+  FOR UPDATE USING (auth.uid() = user_id);
+
 -- 3. Inserir o usuário admin padrão (se não existir)
--- NOTA: Você precisará primeiro criar o usuário na autenticação do Supabase e pegar o ID
+-- NOTA: Você precisará criar o usuário na autenticação do Supabase primeiro e pegar o ID
 
 -- Tabela de competências
 CREATE TABLE IF NOT EXISTS competencies (
