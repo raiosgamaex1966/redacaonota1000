@@ -222,12 +222,12 @@ CREATE TABLE IF NOT EXISTS user_badges (
   UNIQUE(user_id, badge_name)
 );
 
--- Tabela de XP do usuário
-CREATE TABLE IF NOT EXISTS user_xp (
+-- Tabela de Pontos do usuário
+CREATE TABLE IF NOT EXISTS user_pontos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   competency_id INT REFERENCES competencies(id),
-  xp_earned INT,
+  pontos_earned INT,
   action VARCHAR(100),
   action_id UUID,
   earned_at TIMESTAMP DEFAULT NOW()
@@ -238,7 +238,7 @@ CREATE INDEX IF NOT EXISTS idx_essays_user_id ON essays(user_id);
 CREATE INDEX IF NOT EXISTS idx_essays_submitted ON essays(submitted_at);
 CREATE INDEX IF NOT EXISTS idx_evaluations_essay_id ON essay_evaluations(essay_id);
 CREATE INDEX IF NOT EXISTS idx_progress_user_exercise ON user_exercise_progress(user_id, exercise_id);
-CREATE INDEX IF NOT EXISTS idx_xp_user_competency ON user_xp(user_id, competency_id);
+CREATE INDEX IF NOT EXISTS idx_pontos_user_competency ON user_pontos(user_id, competency_id);
 
 -- 4. Habilitar Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -322,13 +322,13 @@ BEGIN
       FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
   END IF;
 
-  -- POLÍTICAS PARA USER_XP
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_xp' AND policyname = 'Users can view own XP') THEN
-    CREATE POLICY "Users can view own XP" ON user_xp
+  -- POLÍTICAS PARA USER_PONTOS
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_pontos' AND policyname = 'Users can view own points') THEN
+    CREATE POLICY "Users can view own points" ON user_pontos
       FOR SELECT USING (auth.uid() = user_id);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_xp' AND policyname = 'Users can insert own XP') THEN
-    CREATE POLICY "Users can insert own XP" ON user_xp
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_pontos' AND policyname = 'Users can insert own points') THEN
+    CREATE POLICY "Users can insert own points" ON user_pontos
       FOR INSERT WITH CHECK (auth.uid() = user_id);
   END IF;
 

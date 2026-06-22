@@ -14,9 +14,9 @@ interface CompetencyCardProps {
 }
 
 export default function CompetencyCard({ competency, xpEarned }: CompetencyCardProps) {
-  // Calculate progress (simplified: max XP per competency is 1000)
-  const maxXp = 1000;
-  const progress = Math.min((xpEarned / maxXp) * 100, 100);
+  // Calculate progress (simplified: max Pontos per competency is 1000)
+  const maxPontos = 1000;
+  const progress = Math.min((xpEarned / maxPontos) * 100, 100);
 
   return (
     <Link
@@ -46,7 +46,7 @@ export default function CompetencyCard({ competency, xpEarned }: CompetencyCardP
       </div>
 
       <div className="text-sm text-gray-600">
-        {xpEarned} XP
+        {xpEarned} Pontos
       </div>
     </Link>
   );

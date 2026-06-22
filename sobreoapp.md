@@ -21,7 +21,7 @@ Aplicativo educacional premium para preparação para a redação do ENEM 2026.
 5. **Avaliação**: Correção automática de redações via IA
 6. **Monetização**: Planos de assinatura (gratuíto, mensal, trimestral, anual)
 7. **Painel de Admin**: Gerenciamento de usuários e redações
-8. **Sistema de XP**: Gamificação com pontos e conquistas
+8. **Sistema de Pontos**: Gamificação com pontos e conquistas
 
 ## Competências do ENEM
 1. **Norma Culta**: Uso correto da gramática, pontuação, concordância e vocabulário

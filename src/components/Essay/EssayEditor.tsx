@@ -169,13 +169,13 @@ export default function EssayEditor({ competencyId, theme, onEvaluationComplete 
 
       if (evalError) throw evalError;
 
-      // 4. Give XP to user
+      // 4. Give Pontos to user
       await supabase
-        .from('user_xp')
+        .from('user_pontos')
         .insert({
           user_id: user.id,
           competency_id: competencyId,
-          xp_earned: 200,
+          pontos_earned: 200,
           action: 'essay_submitted',
           action_id: essay.id,
         });

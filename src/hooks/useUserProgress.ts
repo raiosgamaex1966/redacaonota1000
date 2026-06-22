@@ -3,8 +3,8 @@ import { supabase } from '../utils/supabaseClient';
 
 interface UserProgress {
   userId: string;
-  totalXp: number;
-  competencyXp: Record<number, number>;
+  totalPontos: number;
+  competencyPontos: Record<number, number>;
   badges: string[];
   streak: number;
 }
@@ -21,25 +21,25 @@ export function useUserProgress(userId: string | undefined) {
 
     const fetchProgress = async () => {
       try {
-        // Total XP
-        const { data: xpData } = await supabase
-          .from('user_xp')
-          .select('xp_earned')
+        // Total Pontos
+        const { data: pontosData } = await supabase
+          .from('user_pontos')
+          .select('pontos_earned')
           .eq('user_id', userId);
 
-        const totalXp = xpData?.reduce((sum, item) => sum + item.xp_earned, 0) || 0;
+        const totalPontos = pontosData?.reduce((sum, item) => sum + item.pontos_earned, 0) || 0;
 
-        // XP per competency
-        const { data: xpByComp } = await supabase
-          .from('user_xp')
-          .select('competency_id, xp_earned')
+        // Pontos per competency
+        const { data: pontosByComp } = await supabase
+          .from('user_pontos')
+          .select('competency_id, pontos_earned')
           .eq('user_id', userId);
 
-        const competencyXp: Record<number, number> = {};
-        xpByComp?.forEach(item => {
+        const competencyPontos: Record<number, number> = {};
+        pontosByComp?.forEach(item => {
           if (item.competency_id) {
-            competencyXp[item.competency_id] = 
-              (competencyXp[item.competency_id] || 0) + item.xp_earned;
+            competencyPontos[item.competency_id] = 
+              (competencyPontos[item.competency_id] || 0) + item.pontos_earned;
           }
         });
 
@@ -56,8 +56,8 @@ export function useUserProgress(userId: string | undefined) {
 
         setProgress({
           userId,
-          totalXp,
-          competencyXp,
+          totalPontos,
+          competencyPontos,
           badges,
           streak,
         });

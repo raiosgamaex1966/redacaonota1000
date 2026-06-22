@@ -81,8 +81,8 @@ export default function DashboardMain() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         <div className="bg-white rounded-lg p-6 shadow-sm">
-          <div className="text-3xl font-bold text-primary">{progress?.totalXp || 0}</div>
-          <div className="text-gray-600 text-sm">XP Total</div>
+          <div className="text-3xl font-bold text-primary">{progress?.totalPontos || 0}</div>
+          <div className="text-gray-600 text-sm">Pontos Total</div>
         </div>
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="text-3xl font-bold text-accent">{progress?.badges.length || 0}</div>
@@ -102,7 +102,7 @@ export default function DashboardMain() {
             <CompetencyCard
               key={comp.id}
               competency={comp}
-              xpEarned={progress?.competencyXp[comp.id] || 0}
+              xpEarned={progress?.competencyPontos[comp.id] || 0}
             />
           ))}
         </div>
