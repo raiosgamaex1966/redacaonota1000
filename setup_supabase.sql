@@ -16,6 +16,28 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Função para criar usuário em public.users quando é criado na auth.users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, full_name, trial_ends_at, subscription_plan)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'full_name',
+    NOW() + INTERVAL '7 days',
+    'trial'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger para chamar a função após criar usuário na auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Tabela para armazenar chaves API dos usuários
 CREATE TABLE IF NOT EXISTS user_api_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -254,6 +276,10 @@ BEGIN
           AND (is_admin = true OR email = 'robsoncordeiro1966@gmail.com')
         )
       );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Users can insert during sign up') THEN
+    CREATE POLICY "Users can insert during sign up" ON users
+      FOR INSERT WITH CHECK (true);
   END IF;
 
   -- POLÍTICAS PARA ESSAYS
