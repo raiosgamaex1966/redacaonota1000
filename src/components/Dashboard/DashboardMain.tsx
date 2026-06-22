@@ -67,36 +67,36 @@ export default function DashboardMain() {
   }
 
   return (
-    <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Olá, {user.user_metadata?.full_name || 'Estudante'}! 👋
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Sua jornada rumo à nota mil começa aqui.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm dark:border dark:border-gray-700">
           <div className="text-3xl font-bold text-primary">{progress?.totalPontos || 0}</div>
-          <div className="text-gray-600 text-sm">Pontos Total</div>
+          <div className="text-gray-600 dark:text-gray-400 text-sm">Pontos Total</div>
         </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm dark:border dark:border-gray-700">
           <div className="text-3xl font-bold text-accent">{progress?.badges.length || 0}</div>
-          <div className="text-gray-600 text-sm">Badges</div>
+          <div className="text-gray-600 dark:text-gray-400 text-sm">Badges</div>
         </div>
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm dark:border dark:border-gray-700">
           <div className="text-3xl font-bold text-orange-600">🔥 {progress?.streak || 0}</div>
-          <div className="text-gray-600 text-sm">Dias Consecutivos</div>
+          <div className="text-gray-600 dark:text-gray-400 text-sm">Dias Consecutivos</div>
         </div>
       </div>
 
       {/* Competências */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Competências</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Competências</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {COMPETENCIES.map((comp) => (
             <CompetencyCard
