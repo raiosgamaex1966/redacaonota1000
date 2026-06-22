@@ -11,7 +11,6 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(requireAdmin);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
           navigate('/');
           return;
         }
-        setIsAdmin(true);
       }
 
       setCheckingAdmin(false);

@@ -28,8 +28,7 @@ export const createMercadoPagoPreference = async (plan: {
   try {
     // Para produção, isso deve ser feito no backend para não expor sua access token!
     // Por enquanto, vamos usar uma abordagem simulada
-    
-    const accessToken = 'SEU_ACCESS_TOKEN_AQUI'; // Você pega isso no painel do Mercado Pago
+    // Nota: para produção, o access token deve ficar no backend
 
     const items: MPItem[] = [
       {

@@ -202,14 +202,12 @@ export default function CompetencyPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'aprenda' | 'pratique' | 'escreva'>('aprenda');
-  const [evaluationId, setEvaluationId] = useState<string | null>(null);
   const [evaluation, setEvaluation] = useState<EssayEvaluation | null>(null);
 
   const competencyId = parseInt(id || '1');
   const competency = COMPETENCIES_DATA[competencyId];
 
   const handleEvaluationComplete = async (evalId: string) => {
-    setEvaluationId(evalId);
     const { data } = await supabase
       .from('essay_evaluations')
       .select('*')
@@ -243,7 +241,6 @@ export default function CompetencyPage() {
           <button 
             onClick={() => {
               setEvaluation(null);
-              setEvaluationId(null);
             }}
             className="mb-6 text-gray-600 hover:text-gray-800 flex items-center gap-2"
           >

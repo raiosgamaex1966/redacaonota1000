@@ -98,7 +98,7 @@ export default function MyAccount() {
               <div>
                 <label className="text-sm font-semibold text-gray-600">Plano Atual</label>
                 <div className="mt-1 text-2xl font-bold text-primary">
-                  {getPlanName(userData?.subscription_plan)}
+                  {getPlanName(userData?.subscription_plan ?? null)}
                 </div>
               </div>
               {userData?.trial_ends_at && (
