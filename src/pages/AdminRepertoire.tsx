@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
-import { useAuth } from '../hooks/useAuth';
 
 interface RepertoireItem {
   id: string;
@@ -26,7 +25,6 @@ const typeLabels: Record<RepertoireItem['type'], string> = {
 
 export default function AdminRepertoire() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [repertoire, setRepertoire] = useState<RepertoireItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -42,16 +40,9 @@ export default function AdminRepertoire() {
     relevant_year: undefined
   });
 
-  // Verifica se é admin
-  const isAdmin = user?.email === 'robsoncordeiro1966@gmail.com';
-
   useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
-      return;
-    }
     fetchRepertoire();
-  }, [isAdmin]);
+  }, []);
 
   const fetchRepertoire = async () => {
     try {
