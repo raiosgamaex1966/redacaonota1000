@@ -27,34 +27,57 @@ CREATE TABLE IF NOT EXISTS user_api_keys (
   UNIQUE(user_id, provider)
 );
 
--- Políticas RLS para user_api_keys
+-- Políticas RLS para user_api_keys (com verificação de existência)
 ALTER TABLE user_api_keys ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver suas próprias chaves" ON user_api_keys
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Usuários podem inserir suas próprias chaves" ON user_api_keys
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Usuários podem atualizar suas próprias chaves" ON user_api_keys
-  FOR UPDATE USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_api_keys' AND policyname = 'Usuários podem ver suas próprias chaves') THEN
+    CREATE POLICY "Usuários podem ver suas próprias chaves" ON user_api_keys
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_api_keys' AND policyname = 'Usuários podem inserir suas próprias chaves') THEN
+    CREATE POLICY "Usuários podem inserir suas próprias chaves" ON user_api_keys
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_api_keys' AND policyname = 'Usuários podem atualizar suas próprias chaves') THEN
+    CREATE POLICY "Usuários podem atualizar suas próprias chaves" ON user_api_keys
+      FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
+END
+$$;
 
 -- Políticas RLS para repertoire
 ALTER TABLE repertoire ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Todo mundo pode ver o repertório" ON repertoire
-  FOR SELECT USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'repertoire' AND policyname = 'Todo mundo pode ver o repertório') THEN
+    CREATE POLICY "Todo mundo pode ver o repertório" ON repertoire
+      FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'repertoire' AND policyname = 'Apenas admin pode modificar o repertório') THEN
+    CREATE POLICY "Apenas admin pode modificar o repertório" ON repertoire
+      FOR ALL USING (auth.email() = 'robsoncordeiro1966@gmail.com');
+  END IF;
+END
+$$;
 
-CREATE POLICY "Apenas admin pode modificar o repertório" ON repertoire
-  FOR ALL USING (auth.email() = 'robsoncordeiro1966@gmail.com');
-
+-- Políticas RLS para user_repertoire_favorites
 ALTER TABLE user_repertoire_favorites ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver seus próprios favoritos" ON user_repertoire_favorites
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Usuários podem adicionar/remover favoritos" ON user_repertoire_favorites
-  FOR ALL USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_repertoire_favorites' AND policyname = 'Usuários podem ver seus próprios favoritos') THEN
+    CREATE POLICY "Usuários podem ver seus próprios favoritos" ON user_repertoire_favorites
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_repertoire_favorites' AND policyname = 'Usuários podem adicionar/remover favoritos') THEN
+    CREATE POLICY "Usuários podem adicionar/remover favoritos" ON user_repertoire_favorites
+      FOR ALL USING (auth.uid() = user_id);
+  END IF;
+END
+$$;
 
 -- 3. Inserir o usuário admin padrão (se não existir)
 -- NOTA: Você precisará criar o usuário na autenticação do Supabase primeiro e pegar o ID
