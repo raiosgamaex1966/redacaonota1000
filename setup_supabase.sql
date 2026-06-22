@@ -227,33 +227,55 @@ ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_exercise_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_repertoire_favorites ENABLE ROW LEVEL SECURITY;
 
--- 5. Criar políticas RLS
-CREATE POLICY "Users can view own data" ON users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can view own essays" ON essays
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own essays" ON essays
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own evaluations" ON essay_evaluations
-  FOR SELECT USING (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
-
-CREATE POLICY "Users can insert own evaluations" ON essay_evaluations
-  FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
-
-CREATE POLICY "Users can view own XP" ON user_xp
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own XP" ON user_xp
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own badges" ON user_badges
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own badges" ON user_badges
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- 5. Criar políticas RLS (com verificação de existência)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Users can view own data') THEN
+    CREATE POLICY "Users can view own data" ON users
+      FOR SELECT USING (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essays' AND policyname = 'Users can view own essays') THEN
+    CREATE POLICY "Users can view own essays" ON essays
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essays' AND policyname = 'Users can insert own essays') THEN
+    CREATE POLICY "Users can insert own essays" ON essays
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essay_evaluations' AND policyname = 'Users can view own evaluations') THEN
+    CREATE POLICY "Users can view own evaluations" ON essay_evaluations
+      FOR SELECT USING (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essay_evaluations' AND policyname = 'Users can insert own evaluations') THEN
+    CREATE POLICY "Users can insert own evaluations" ON essay_evaluations
+      FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_xp' AND policyname = 'Users can view own XP') THEN
+    CREATE POLICY "Users can view own XP" ON user_xp
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_xp' AND policyname = 'Users can insert own XP') THEN
+    CREATE POLICY "Users can insert own XP" ON user_xp
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_badges' AND policyname = 'Users can view own badges') THEN
+    CREATE POLICY "Users can view own badges" ON user_badges
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_badges' AND policyname = 'Users can insert own badges') THEN
+    CREATE POLICY "Users can insert own badges" ON user_badges
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_exercise_progress' AND policyname = 'Users can view own progress') THEN
+    CREATE POLICY "Users can view own progress" ON user_exercise_progress
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_exercise_progress' AND policyname = 'Users can modify own progress') THEN
+    CREATE POLICY "Users can modify own progress" ON user_exercise_progress
+      FOR ALL USING (auth.uid() = user_id);
+  END IF;
+END
+$$;
 
 -- 6. Inserir as 5 competências do ENEM
 INSERT INTO competencies (id, name, short_name, description, icon, order_number)
