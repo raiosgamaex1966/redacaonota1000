@@ -39,6 +39,23 @@ CREATE POLICY "Usuários podem inserir suas próprias chaves" ON user_api_keys
 CREATE POLICY "Usuários podem atualizar suas próprias chaves" ON user_api_keys
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Políticas RLS para repertoire
+ALTER TABLE repertoire ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Todo mundo pode ver o repertório" ON repertoire
+  FOR SELECT USING (true);
+
+CREATE POLICY "Apenas admin pode modificar o repertório" ON repertoire
+  FOR ALL USING (auth.email() = 'robsoncordeiro1966@gmail.com');
+
+ALTER TABLE user_repertoire_favorites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Usuários podem ver seus próprios favoritos" ON user_repertoire_favorites
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem adicionar/remover favoritos" ON user_repertoire_favorites
+  FOR ALL USING (auth.uid() = user_id);
+
 -- 3. Inserir o usuário admin padrão (se não existir)
 -- NOTA: Você precisará criar o usuário na autenticação do Supabase primeiro e pegar o ID
 

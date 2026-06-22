@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 
 interface User {
@@ -20,6 +21,7 @@ interface Essay {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [essays, setEssays] = useState<Essay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,9 +103,17 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Painel de Administração</h1>
-          <p className="text-gray-600">Gerencie seus alunos e redações</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Painel de Administração</h1>
+            <p className="text-gray-600">Gerencie seus alunos, redações e repertório</p>
+          </div>
+          <button
+            onClick={() => navigate('/admin/repertoire')}
+            className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 font-bold flex items-center gap-2"
+          >
+            📚 Gerenciar Repertório
+          </button>
         </div>
 
         {/* Tabs */}

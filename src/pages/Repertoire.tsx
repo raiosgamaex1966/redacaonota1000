@@ -16,7 +16,7 @@ const typeLabels: Record<RepertoireItem['type'], string> = {
   livro: 'Livro',
   conceito: 'Conceito',
   dados: 'Dados',
-  historico: 'Histórico',
+  historico: 'História',
   legislacao: 'Legislação'
 };
 
@@ -29,51 +29,13 @@ export default function Repertoire() {
   useEffect(() => {
     const fetchRepertoire = async () => {
       try {
-        // Por enquanto, vamos usar dados de exemplo
-        const mockRepertoire: RepertoireItem[] = [
-          {
-            id: '1',
-            title: '1984',
-            type: 'livro',
-            description: 'Distopia de George Orwell sobre vigilância total.',
-            content: 'Livre por George Orwell, publicado em 1949, que retrata um futuro distópico dominado por um regime totalitário.',
-            tags: ['distopia', 'politica', 'sociedade']
-          },
-          {
-            id: '2',
-            title: 'O Poder do Hábito',
-            type: 'livro',
-            description: 'Livro sobre como os hábitos funcionam e como mudá-los.',
-            content: 'Por Charles Duhigg, explora a ciência por trás dos hábitos.',
-            tags: ['autoajuda', 'ciencia', 'comportamento']
-          },
-          {
-            id: '3',
-            title: 'V de Vingança',
-            type: 'filme',
-            description: 'Filme sobre resistência contra um governo totalitário.',
-            content: 'Lançado em 2005, baseado na série de mesmo nome.',
-            tags: ['resistencia', 'totalitarismo', 'liberdade']
-          },
-          {
-            id: '4',
-            title: 'Constituição Federal de 1988',
-            type: 'legislacao',
-            description: 'Constituição que redemocratizou o Brasil.',
-            content: 'Promulgada em 5 de outubro de 1988, é a Carta Magna que rege o Brasil.',
-            tags: ['direito', 'brasil', 'democracia']
-          },
-          {
-            id: '5',
-            title: 'Inclusão Financeira',
-            type: 'dados',
-            description: 'Dados sobre acesso a serviços bancários.',
-            content: 'Mais de 50 milhões de brasileiros ainda não têm acesso a serviços bancários básicos.',
-            tags: ['economia', 'brasil', 'desigualdade']
-          }
-        ];
+        const { data, error } = await supabase
+          .from('repertoire')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-        setRepertoire(mockRepertoire);
+        if (error) throw error;
+        setRepertoire(data || []);
       } catch (error) {
         console.error('Erro ao buscar repertório:', error);
       } finally {

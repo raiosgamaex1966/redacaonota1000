@@ -11,6 +11,7 @@ import SubscriptionPlans from './pages/SubscriptionPlans';
 import AdminDashboard from './pages/AdminDashboard';
 import MyAccount from './pages/MyAccount';
 import Repertoire from './pages/Repertoire';
+import AdminRepertoire from './pages/AdminRepertoire';
 
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -45,6 +46,11 @@ function App() {
           <Route path="/admin" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/repertoire" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminRepertoire />
             </ProtectedRoute>
           } />
         </Routes>
