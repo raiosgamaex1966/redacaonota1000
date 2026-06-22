@@ -230,26 +230,73 @@ ALTER TABLE user_repertoire_favorites ENABLE ROW LEVEL SECURITY;
 -- 5. Criar políticas RLS (com verificação de existência)
 DO $$
 BEGIN
+  -- POLÍTICAS PARA USERS
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Users can view own data') THEN
     CREATE POLICY "Users can view own data" ON users
       FOR SELECT USING (auth.uid() = id);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Admins can view all users') THEN
+    CREATE POLICY "Admins can view all users" ON users
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM users 
+          WHERE id = auth.uid() 
+          AND (is_admin = true OR email = 'robsoncordeiro1966@gmail.com')
+        )
+      );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Admins can update all users') THEN
+    CREATE POLICY "Admins can update all users" ON users
+      FOR UPDATE USING (
+        EXISTS (
+          SELECT 1 FROM users 
+          WHERE id = auth.uid() 
+          AND (is_admin = true OR email = 'robsoncordeiro1966@gmail.com')
+        )
+      );
+  END IF;
+
+  -- POLÍTICAS PARA ESSAYS
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essays' AND policyname = 'Users can view own essays') THEN
     CREATE POLICY "Users can view own essays" ON essays
       FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essays' AND policyname = 'Admins can view all essays') THEN
+    CREATE POLICY "Admins can view all essays" ON essays
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM users 
+          WHERE id = auth.uid() 
+          AND (is_admin = true OR email = 'robsoncordeiro1966@gmail.com')
+        )
+      );
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essays' AND policyname = 'Users can insert own essays') THEN
     CREATE POLICY "Users can insert own essays" ON essays
       FOR INSERT WITH CHECK (auth.uid() = user_id);
   END IF;
+
+  -- POLÍTICAS PARA ESSAY_EVALUATIONS
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essay_evaluations' AND policyname = 'Users can view own evaluations') THEN
     CREATE POLICY "Users can view own evaluations" ON essay_evaluations
       FOR SELECT USING (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essay_evaluations' AND policyname = 'Admins can view all evaluations') THEN
+    CREATE POLICY "Admins can view all evaluations" ON essay_evaluations
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM users 
+          WHERE id = auth.uid() 
+          AND (is_admin = true OR email = 'robsoncordeiro1966@gmail.com')
+        )
+      );
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'essay_evaluations' AND policyname = 'Users can insert own evaluations') THEN
     CREATE POLICY "Users can insert own evaluations" ON essay_evaluations
       FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM essays WHERE id = essay_id));
   END IF;
+
+  -- POLÍTICAS PARA USER_XP
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_xp' AND policyname = 'Users can view own XP') THEN
     CREATE POLICY "Users can view own XP" ON user_xp
       FOR SELECT USING (auth.uid() = user_id);
@@ -258,6 +305,8 @@ BEGIN
     CREATE POLICY "Users can insert own XP" ON user_xp
       FOR INSERT WITH CHECK (auth.uid() = user_id);
   END IF;
+
+  -- POLÍTICAS PARA USER_BADGES
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_badges' AND policyname = 'Users can view own badges') THEN
     CREATE POLICY "Users can view own badges" ON user_badges
       FOR SELECT USING (auth.uid() = user_id);
@@ -266,6 +315,8 @@ BEGIN
     CREATE POLICY "Users can insert own badges" ON user_badges
       FOR INSERT WITH CHECK (auth.uid() = user_id);
   END IF;
+
+  -- POLÍTICAS PARA USER_EXERCISE_PROGRESS
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_exercise_progress' AND policyname = 'Users can view own progress') THEN
     CREATE POLICY "Users can view own progress" ON user_exercise_progress
       FOR SELECT USING (auth.uid() = user_id);
